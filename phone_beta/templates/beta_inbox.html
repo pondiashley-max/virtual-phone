@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>beta phone - whatsapp messenger</title>
+    <link rel="stylesheet" href="/static/beta_style.css">
+</head>
+<body>
+    <main class="wa-main">
+        <section class="wa-header">
+            <h1>beta phone</h1>
+            <p>chatting with: alpha phone | status: online</p>
+            <p><a href="/alpha/">switch to alpha phone</a></p>
+        </section>
+
+        <section class="wa-call-banner">
+            <fieldset>
+                <legend>call control panel (internet calling)</legend>
+                <p>call status: <span id="call-status">{{ active_call.status|default:"idle" }}</span></p>
+                <video id="local-video" autoplay muted></video>
+                <section id="call-actions">
+                    <form method="post">
+                        {% csrf_token %}
+                        {% if active_call and active_call.status == 'ringing' and active_call.caller == 'alpha' %}
+                        <button type="submit" name="action" value="answer_call">answer incoming call</button>
+                        <button type="submit" name="action" value="end_call">reject call</button>
+                        {% elif active_call and active_call.status == 'active' %}
+                        <button type="submit" name="action" value="end_call">end call</button>
+                        {% else %}
+                        <p>no incoming calls</p>
+                        {% endif %}
+                    </form>
+                </section>
+            </fieldset>
+        </section>
+
+        <section class="wa-chat-window">
+            <fieldset>
+                <legend>messages and shared media</legend>
+                <section class="wa-message-list">
+                    {% for msg in messages %}
+                        {% if msg.sender == 'beta' %}
+                        <p class="bubble sent"><strong>you:</strong> {{ msg.text }} <span class="time">{{ msg.timestamp|date:"H:i" }}</span></p>
+                        {% else %}
+                        <p class="bubble received"><strong>alpha phone:</strong> {{ msg.text }} <span class="time">{{ msg.timestamp|date:"H:i" }}</span></p>
+                        {% endif %}
+                    {% endfor %}
+                    {% for item in items %}
+                        {% if item.sender == 'beta' %}
+                        <p class="bubble sent">
+                            <strong>you shared {{ item.item_type }}:</strong><br>
+                            {% if item.item_type == 'image' %}
+                            <img src="{{ item.file.url }}" alt="shared photo" class="media-preview"><br>
+                            {% elif item.item_type == 'audio' %}
+                            <audio controls src="{{ item.file.url }}"></audio><br>
+                            {% elif item.item_type == 'video' %}
+                            <video controls width="200" src="{{ item.file.url }}"></video><br>
+                            {% endif %}
+                            <a href="{{ item.file.url }}" download="{{ item.file_name }}" target="_blank">download / view {{ item.file_name }}</a>
+                            <span class="time">{{ item.timestamp|date:"H:i" }}</span>
+                        </p>
+                        {% else %}
+                        <p class="bubble received">
+                            <strong>alpha phone shared {{ item.item_type }}:</strong><br>
+                            {% if item.item_type == 'image' %}
+                            <img src="{{ item.file.url }}" alt="shared photo" class="media-preview"><br>
+                            {% elif item.item_type == 'audio' %}
+                            <audio controls src="{{ item.file.url }}"></audio><br>
+                            {% elif item.item_type == 'video' %}
+                            <video controls width="200" src="{{ item.file.url }}"></video><br>
+                            {% endif %}
+                            <a href="{{ item.file.url }}" download="{{ item.file_name }}" target="_blank">download / view {{ item.file_name }}</a>
+                            <span class="time">{{ item.timestamp|date:"H:i" }}</span>
+                        </p>
+                        {% endif %}
+                    {% endfor %}
+                </section>
+            </fieldset>
+        </section>
+
+        <section class="wa-media-sender">
+            <fieldset>
+                <legend>share photo, audio, video or file</legend>
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="share_file">
+                    <label for="item_type">type:</label>
+                    <select id="item_type" name="item_type">
+                        <option value="image">image / photo</option>
+                        <option value="audio">audio note</option>
+                        <option value="video">video clip</option>
+                        <option value="file">document</option>
+                    </select>
+                    <label for="file">select file:</label>
+                    <input type="file" id="file" name="file" required>
+                    <button type="submit">send media</button>
+                </form>
+            </fieldset>
+        </section>
+
+        <section class="wa-input-footer">
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="send_message">
+                <label for="text">type message:</label>
+                <input type="text" id="text" name="text" placeholder="type a message..." autocomplete="off" required>
+                <button type="submit">send</button>
+            </form>
+        </section>
+    </main>
+    <script src="/static/beta_script.js"></script>
+</body>
+</html>
