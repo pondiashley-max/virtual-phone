@@ -180,6 +180,7 @@ urlpatterns = [
 
 if __name__ == '__main__':
     try:
+        call_command('makemigrations', 'phone_system', interactive=False)
         call_command('migrate', interactive=False)
     except Exception as e:
         print("migration note:", e)
